@@ -15,14 +15,15 @@ from nltk.stem import WordNetLemmatizer, PorterStemmer
 from nltk.corpus import stopwords
 from bs4 import BeautifulSoup
 import re
+import json
 
 # Download necessary NLTK data
-# nltk.download('punkt')
-# nltk.download('wordnet')
-# nltk.download('stopwords')
+nltk.download('punkt')
+nltk.download('wordnet')
+nltk.download('stopwords')
 
 # Initialize NLTK tools
-stop_words = set(stopwords.words('english'))
+# stop_words = set(stopwords.words('english'))
 lemmatizer = WordNetLemmatizer()
 stemmer = PorterStemmer()
 
@@ -33,7 +34,7 @@ def tokenize_and_lemmatize(doc):
 
     # Extract text from HTML
     soup = BeautifulSoup(doc, "html.parser")
-    text = soup.get_text()
+    # text = soup.get_text()
     
     # Clean the extracted text, including removing script and style elements
     for script_or_style in soup(["script", "style"]):
@@ -95,6 +96,13 @@ def combine_generated_text(generated_text):
         synthetic_docs.append(doc)
     return synthetic_docs
 
+#Saves the generated-text to json in a format list of dictionary with input as key and value is the rest !! 
+def save_to_json(generated_text, filename='rtdocs.json'):
+    """Save paragraphs to a JSON file."""
+    data = [{'input': paragraph} for paragraph in generated_text]
+    with open(filename, 'w', encoding='utf-8') as file:
+        json.dump(data, file, ensure_ascii=False, indent=4)
+
 # Generate and combine synthetic documents
 generated_text = generate_new_text(preprocessed_text)
 synthetic_docs = combine_generated_text(generated_text)
@@ -104,3 +112,5 @@ print("NEW RESULTS")
 print(len(generated_text))
 print(generated_text)
 print(synthetic_docs)
+
+save_to_json(generated_text)
