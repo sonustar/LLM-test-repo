@@ -13,11 +13,13 @@ import nltk
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer, PorterStemmer
 from nltk.corpus import stopwords
+from bs4 import BeautifulSoup
+import re
 
 # Download necessary NLTK data
-nltk.download('punkt')
-nltk.download('wordnet')
-nltk.download('stopwords')
+# nltk.download('punkt')
+# nltk.download('wordnet')
+# nltk.download('stopwords')
 
 # Initialize NLTK tools
 stop_words = set(stopwords.words('english'))
@@ -28,22 +30,31 @@ def tokenize_and_lemmatize(doc):
     """
     Tokenize, lemmatize, stem, convert to lowercase, and remove stop words from the input document.
     """
-    # Tokenize the document
-    tokens = word_tokenize(doc)
+
+    # Extract text from HTML
+    soup = BeautifulSoup(doc, "html.parser")
+    text = soup.get_text()
     
-    # Convert tokens to lowercase
-    tokens = [token.lower() for token in tokens]
+    # Clean the extracted text, including removing script and style elements
+    for script_or_style in soup(["script", "style"]):
+        script_or_style.extract()
     
-    # Remove stop words
+    text = soup.get_text()
+
+    # Remove non-alphabetic characters and convert to lowercase
+    text = re.sub(r'[^a-zA-Z\s]', '', text).lower()
+    
+    # Tokenize the text into individual words
+    tokens = word_tokenize(text)
+    
+    # Remove stopwords
+    stop_words = set(stopwords.words('english'))
     tokens = [token for token in tokens if token not in stop_words]
     
-    # Apply stemming
-    tokens = [stemmer.stem(token) for token in tokens]
+    # Lemmatize the tokens
+    lemmatized_tokens = [lemmatizer.lemmatize(token) for token in tokens]
     
-    # Apply lemmatization
-    lemmas = [lemmatizer.lemmatize(token) for token in tokens]
-    
-    return lemmas
+    return lemmatized_tokens
 
 # Load configuration and documents
 config_data = load_yaml_file("config.yaml")
@@ -54,6 +65,9 @@ docs = loader.load()
 
 # Preprocess text
 preprocessed_text = [tokenize_and_lemmatize(str(doc)) for doc in docs]
+# print("PREPROCESSED TEXT")
+# print(len(preprocessed_text))
+# print(preprocessed_text)
 
 # Generate synthetic data
 def generate_new_text(preprocessed_text):
@@ -85,5 +99,8 @@ def combine_generated_text(generated_text):
 generated_text = generate_new_text(preprocessed_text)
 synthetic_docs = combine_generated_text(generated_text)
 
+
+print("NEW RESULTS")
+print(len(generated_text))
 print(generated_text)
 print(synthetic_docs)
